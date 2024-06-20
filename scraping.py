@@ -10,14 +10,14 @@ soup = BeautifulSoup(page.text, "html.parser")
 
 
 table = soup.find('table', attrs={"class": "table table-hover dataTable no-footer generic-table compact"})
-
 rows = table.find_all("tr")
-
+pret_bet=soup.find("b",attrs={"class":"value"})
+pret_bet=pret_bet.text.strip()
 headers = [header.text.strip() for header in rows[0].find_all('th')]
 
 def convert_to_float(value):
     try:
-        clean_value = value.replace(',', '.')
+        clean_value=value.replace('.','').replace(',', '.')
         return round(float(clean_value), 3)
     except ValueError:
         return value
@@ -56,6 +56,16 @@ for i in range(lung):
             else:
                 if j%2 != 0:
                     row_data.append(convert_to_float(cell_text))
+
+    for row in rows[14:16]:
+        cells = row.find_all('td')
+        for j, cell in enumerate(cells):
+            cell_text = cell.text.strip()
+            if ok == 0 and j%2 == 0:
+                headers.append(cell_text)
+            else:
+                if j%2 != 0:
+                    row_data.append(convert_to_float(cell_text))
     data[i].extend(row_data)
     ok+=1
 
@@ -78,12 +88,18 @@ with pd.ExcelWriter('ConstituentiBet.xlsx', engine='xlsxwriter') as writer:
 
     worksheet.merge_range("A1:H2", "BET® (BUCHAREST EXCHANGE TRADING)", merge_format)
     worksheet.merge_range("I1:N2", "DETALII CONSTITUENTI / ZI", merge_format)
+    worksheet.merge_range("O1:P2", "MAXIME", merge_format)
     number_format = workbook.add_format({'num_format': '#,##0.000'})
 
-    for col_num in range(3, 13):
+    for col_num in range(3, 14):
         worksheet.set_column(col_num, col_num, None, number_format)
-
+    bold_format = workbook.add_format({'bold': True})
     worksheet.set_column(1, 1, 30)
     worksheet.set_column(2, 2, 15)
+    worksheet.set_column(0, 0, 10,bold_format)
+    pretul=convert_to_float(pret_bet)
+    worksheet.write_number(lung+4,2,pretul)
+    worksheet.merge_range(lung+4,0,lung+4,1,"PRET BET",merge_format)
+    for i in range(10,16):
+        worksheet.set_column(i,i,10)
     
-workbook.close
