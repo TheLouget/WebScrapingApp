@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-
 url = "https://bvb.ro/FinancialInstruments/Indices/IndicesProfiles.aspx?i=BET"
 
 page = requests.get(url)
@@ -47,7 +46,7 @@ for i in range(lung):
     table = soup.find('table', attrs={"id": "ctl00_body_ctl02_PricesControl_dvCPrices"})
     rows = table.find_all("tr")
     row_data=[]
-    for row in rows[6:12]:
+    for row in rows[5:12]:
         cells = row.find_all('td')
         for j, cell in enumerate(cells):
             cell_text = cell.text.strip()
@@ -66,6 +65,9 @@ for i in range(lung):
             else:
                 if j%2 != 0:
                     row_data.append(convert_to_float(cell_text))
+    if ok == 0:
+        headers.append("Grafic")
+    row_data.append("https://www.tradingview.com/chart/hHTcjp5L/?symbol=BVB%3A"+data[i][0])
     data[i].extend(row_data)
     ok+=1
 
@@ -87,19 +89,30 @@ with pd.ExcelWriter('ConstituentiBet.xlsx', engine='xlsxwriter') as writer:
     )
 
     worksheet.merge_range("A1:H2", "BET® (BUCHAREST EXCHANGE TRADING)", merge_format)
-    worksheet.merge_range("I1:N2", "DETALII CONSTITUENTI / ZI", merge_format)
-    worksheet.merge_range("O1:P2", "MAXIME", merge_format)
+    worksheet.merge_range("I1:O2", "DETALII CONSTITUENTI / ZI", merge_format)
+    worksheet.merge_range("P1:Q2", "MAXIME", merge_format)
     number_format = workbook.add_format({'num_format': '#,##0.000'})
+    font_red = workbook.add_format({'font_color': 'red','num_format': '#,##0.000'})
+    font_green = workbook.add_format({'font_color': 'green','num_format': '#,##0.000'})
 
-    for col_num in range(3, 14):
-        worksheet.set_column(col_num, col_num, None, number_format)
+    col = 10  # Indexul coloanei K
+    for row in range(0, lung):
+        cell_value = df.iloc[row, col]
+        if isinstance(cell_value, (int, float)):
+            if cell_value < 0:
+                worksheet.write(row+3, col, cell_value, font_red)
+            elif cell_value >= 0:
+                worksheet.write(row+3, col, cell_value, font_green)
+        else:
+            worksheet.write(row+3, col, cell_value)
+
+    for col_num in range(3, 17):
+        worksheet.set_column(col_num, col_num, 10, number_format)
     bold_format = workbook.add_format({'bold': True})
+
     worksheet.set_column(1, 1, 30)
     worksheet.set_column(2, 2, 15)
     worksheet.set_column(0, 0, 10,bold_format)
     pretul=convert_to_float(pret_bet)
     worksheet.write_number(lung+4,2,pretul)
     worksheet.merge_range(lung+4,0,lung+4,1,"PRET BET",merge_format)
-    for i in range(10,16):
-        worksheet.set_column(i,i,10)
-    

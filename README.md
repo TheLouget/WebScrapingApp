@@ -6,3 +6,6 @@ Am facut un request catre site-ul BVB pentru a scrie intr un excel toti constitu
 Ziua 3:
 Aplicatia face request uri si pentru fiecare comanie din indice pentru a afisa mai multe informatii si le salveza in excel
 Ziua 4:
+Aplicatia afiseaza maximele fiecarei companiii si pretul indicelui
+Ziua 5:
+In excel sunt adaugate link uri catre graficele fiecarei companii si fontul unei coloane este schimbat pentru o mai buna vizualizare a schimbarilor 
