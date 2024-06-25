@@ -66,7 +66,25 @@ for i in range(lung):
                 if j%2 != 0:
                     row_data.append(convert_to_float(cell_text))
     if ok == 0:
-        headers.append("Grafic")
+        headers.append("Ultimul Dividend")
+        headers.append("Grafic")   
+    table=soup.find('table',attrs={"id":"ctl00_body_ctl02_IndicatorsControl_dvIndicators"})
+    rows=table.find_all("tr")
+    nr=0
+    for row in rows:
+        if nr == 0:
+            cells=row.find_all("td")
+            j=0
+            for k,cell in enumerate(cells):
+                cell_text=cell.text.strip()
+                if "Dividend" in cell_text:
+                    j+=1
+                else:
+                    if j>0:
+                        nr=nr+1
+                        row_data.append(convert_to_float(cell_text))
+    if nr == 0:
+        row_data.append(0)       
     row_data.append("https://www.tradingview.com/chart/hHTcjp5L/?symbol=BVB%3A"+data[i][0])
     data[i].extend(row_data)
     ok+=1
@@ -95,7 +113,7 @@ with pd.ExcelWriter('ConstituentiBet.xlsx', engine='xlsxwriter') as writer:
     font_red = workbook.add_format({'font_color': 'red','num_format': '#,##0.000'})
     font_green = workbook.add_format({'font_color': 'green','num_format': '#,##0.000'})
 
-    col = 10  # Indexul coloanei K
+    col = 10  
     for row in range(0, lung):
         cell_value = df.iloc[row, col]
         if isinstance(cell_value, (int, float)):
@@ -106,7 +124,7 @@ with pd.ExcelWriter('ConstituentiBet.xlsx', engine='xlsxwriter') as writer:
         else:
             worksheet.write(row+3, col, cell_value)
 
-    for col_num in range(3, 17):
+    for col_num in range(3, 18):
         worksheet.set_column(col_num, col_num, 10, number_format)
     bold_format = workbook.add_format({'bold': True})
 

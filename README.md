@@ -8,4 +8,6 @@ Aplicatia face request uri si pentru fiecare comanie din indice pentru a afisa m
 Ziua 4:
 Aplicatia afiseaza maximele fiecarei companiii si pretul indicelui
 Ziua 5:
-In excel sunt adaugate link uri catre graficele fiecarei companii si fontul unei coloane este schimbat pentru o mai buna vizualizare a schimbarilor 
+In excel sunt adaugate link uri catre graficele fiecarei companii si fontul unei coloane este schimbat pentru o mai buna vizualizare a schimbarilor
+Ziua 6:
+Completarea excel ului cu dividendele fiecarei comanii si completarea cu o daca compania nu a oferit niciun dividend
