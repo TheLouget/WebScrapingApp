@@ -4,8 +4,8 @@ import pandas as pd
 import time
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from tkinter import ttk  # pentru Progressbar
-import threading  # pentru threading
+from tkinter import ttk
+import threading
 
 def convert_to_float(value):
     try:
@@ -153,16 +153,21 @@ def fetch_and_save_data(file_path, progress_bar):
     
     messagebox.showinfo("Succes", f"Fișierul a fost salvat la {file_path}")
 
-def select_save_path():
-    file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")])
-    if file_path:
-        progress_bar['value'] = 0 
-        thread = threading.Thread(target=fetch_and_save_data, args=(file_path, progress_bar))
-        thread.start()
+def schedule_next_run():
+    root.after(60000, start_fetch_and_save)
 
-root = tk.Tk()
-root.title("Salvare Fișier BET")
-root.configure(background="lightblue")
+def start_fetch_and_save():
+    global saved_file_path
+    if saved_file_path is None:
+        saved_file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")])
+    else:
+        print("//////////////Aplicatia s-a mai executat o data///////////////")
+    if saved_file_path:
+        progress_bar['value'] = 0
+        thread = threading.Thread(target=fetch_and_save_data, args=(saved_file_path, progress_bar))
+        thread.start()
+        schedule_next_run()
+
 def center_window(window, width=400, height=200):
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
@@ -170,11 +175,18 @@ def center_window(window, width=400, height=200):
     y = (screen_height // 2) - (height // 2)
     window.geometry(f'{width}x{height}+{x}+{y}')
 
+saved_file_path = None
+
+root = tk.Tk()
+root.title("Salvare Fișier BET")
+root.configure(background="lightblue")
+
 center_window(root, 400, 200)
 
-button_select_path = tk.Button(root, text="Selectează calea și salvează fișierul", command=select_save_path)
+button_select_path = tk.Button(root, text="Selectează calea și salvează fișierul", command=start_fetch_and_save)
 button_select_path.pack(pady=20)
 
 progress_bar = ttk.Progressbar(root, orient="horizontal", length=300, mode="determinate")
 progress_bar.pack(pady=20)
+
 root.mainloop()
