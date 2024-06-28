@@ -6,6 +6,17 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
 import threading
+import os
+from email.message import EmailMessage
+import ssl
+import smtplib
+import json
+
+global frecventa
+frecventa={}
+global initializator
+initializator=0
+
 
 def convert_to_float(value):
     try:
@@ -13,17 +24,61 @@ def convert_to_float(value):
         return round(float(clean_value), 3)
     except ValueError:
         return value
+    
+def request_url(url):
+    try:
+        page = requests.get(url)
+        return page
+    except requests.exceptions.RequestException:
+        print("Request exception occurred. Retrying...")
+        time.sleep(1)
+        return request_url(url)
 
 def process_other(value):
     return value
 
+def get_password():
+    with open('config.json') as f:
+        config = json.load(f)
+        return config['password']
+
+def trimite_mail(rand):
+    email_sender="YOUR_MAIL"
+    email_password=get_password()
+    email_receiver="MAIL_RECEIVER"
+    variatie=abs(rand[10])
+    subject=[]
+    if(variatie > 2 and variatie < 3):
+        subject="Variatie usoara a "+rand[0]
+    if(variatie > 3 and variatie < 5):
+        subject="Variatie moderata a "+rand[0]
+    if(variatie > 5):
+        subject="Variatie extrema a "+rand[0]
+    body = f""" 
+    {rand[1]} a avut o variatie de pret de {rand[10]} % ajungand la pretul de {rand[8]}!
+"""
+    em=EmailMessage()
+    em['From']=email_sender
+    em['To']=email_receiver
+    em['Subject']=subject
+    em.set_content(body)
+
+    context=ssl.create_default_context()
+
+    with smtplib.SMTP_SSL('smtp.gmail.com',465,context=context) as smtp:
+        smtp.login(email_sender,email_password)
+        smtp.sendmail(email_sender,email_receiver,em.as_string())
+    
+def verifica_pret(rand):
+    global frecventa
+    if abs(rand[10])>2 and frecventa[rand[0]]==0:
+        frecventa[rand[0]]+=1
+        trimite_mail(rand)
+
 def fetch_and_save_data(file_path, progress_bar):
+    global initializator,frecventa
     url = "https://bvb.ro/FinancialInstruments/Indices/IndicesProfiles.aspx?i=BET"
-    page = requests.get(url)
-    while not page.ok:
-        page = requests.get(url)
-        time.sleep(1)
-        print("Connection failed. Retrying......")
+    page=request_url(url)
     print("Connection established")
     soup = BeautifulSoup(page.text, "html.parser")
 
@@ -45,15 +100,17 @@ def fetch_and_save_data(file_path, progress_bar):
                 row_data.append(process_other(cell_text))
         data.append(row_data)
 
+    if initializator == 0:
+        for i,row in enumerate(data):
+            frecventa[data[i][0]]=0
+        initializator+=1
+
     lung = len(data)
     ok = 0
     for i in range(lung):
         url = "https://bvb.ro/FinancialInstruments/Details/FinancialInstrumentsDetails.aspx?s=" + data[i][0]
-        page = requests.get(url)
-        while not page.ok:
-            print("Connection failed.Retrying....")
-            time.sleep(1)
-            page=requests.get(url)
+        page = request_url(url)
+
         print("Connection established with "+data[i][0])
         soup = BeautifulSoup(page.text, "html.parser")
         table = soup.find('table', attrs={"id": "ctl00_body_ctl02_PricesControl_dvCPrices"})
@@ -101,7 +158,7 @@ def fetch_and_save_data(file_path, progress_bar):
         row_data.append("https://www.tradingview.com/chart/hHTcjp5L/?symbol=BVB%3A" + data[i][0])
         data[i].extend(row_data)
         ok += 1
-
+        verifica_pret(data[i])
         progress_bar['value'] = (i+1) * 100 / lung
         root.update_idletasks()
 
